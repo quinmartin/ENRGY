@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EnergyPercentages</title>
+<meta name="description" content="A Mac menu bar app that scores how much energy each of your apps is using, from 0 to 10.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column; hero pairs the pitch with a live-looking menu bar dropdown */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #15202b;
+  --muted: #5a6876;
+  --line: #d5dce3;
+  --bolt: #d98a00;
+  --low: #2f9e57;
+  --mid: #d4a017;
+  --high: #d9473b;
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #10161c; --surface: #1a232c; --ink: #e8edf2; --muted: #9aa8b5;
+    --line: #2c3843; --bolt: #f2b33d; --low: #4cc27a; --mid: #e6bd3a; --high: #f06a5e;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 17px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 960px; margin: 0 auto; padding-block: 56px 72px; display: grid; gap: 72px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+p { margin: 0; max-width: 62ch; }
+a { color: inherit; }
+a:focus-visible { outline: 3px solid var(--bolt); outline-offset: 3px; border-radius: 6px; }
+
+.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; }
+.pitch { display: grid; gap: 20px; min-width: 0; }
+.eyebrow { font: 500 0.8rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.eyebrow svg { width: 14px; height: 14px; fill: var(--bolt); }
+.lede { font-size: 1.15rem; color: var(--muted); }
+.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 8px; }
+.download {
+  display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+  background: var(--ink); color: var(--bg); font: 500 1.05rem var(--body);
+  padding: 14px 24px; border-radius: 12px; transition: transform .15s ease;
+}
+.download:hover { transform: translateY(-2px); }
+.download svg { width: 18px; height: 18px; fill: currentColor; }
+.meta { font: 500 0.85rem var(--mono); color: var(--muted); }
+
+/* the dropdown mockup */
+.menu { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -24px rgba(20,32,43,.35); overflow: hidden; min-width: 0; }
+.menubar { display: flex; justify-content: flex-end; gap: 14px; padding: 8px 14px; border-bottom: 1px solid var(--line); font: 500 0.8rem var(--mono); color: var(--muted); }
+.menubar svg { width: 13px; height: 13px; fill: var(--bolt); vertical-align: -2px; }
+.menu h3 { margin: 0; padding: 14px 16px 6px; font: 500 0.75rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.menu ul { list-style: none; margin: 0; padding: 0 8px 10px; }
+.menu li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 8px; border-radius: 8px; }
+.menu li:hover { background: var(--bg); }
+.score { display: inline-flex; align-items: center; gap: 4px; font: 500 0.95rem var(--mono); font-variant-numeric: tabular-nums; }
+.score svg { width: 12px; height: 12px; fill: currentColor; }
+.s-low { color: var(--low); } .s-mid { color: var(--mid); } .s-high { color: var(--high); }
+
+.scale { display: grid; gap: 20px; }
+.bar { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
+.bar span { text-align: center; font: 500 0.85rem var(--mono); padding: 10px 0; border-radius: 6px; color: #fff; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 28px; color: var(--muted); font-size: 0.95rem; }
+.legend b { color: var(--ink); font-weight: 500; }
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.features div { display: grid; gap: 8px; align-content: start; border-top: 2px solid var(--ink); padding-top: 16px; min-width: 0; }
+.features h3 { margin: 0; font: 700 1.1rem var(--display); }
+.features p { color: var(--muted); font-size: 0.98rem; }
+
+.install { display: grid; gap: 20px; }
+.install ol { margin: 0; padding-left: 1.3em; display: grid; gap: 12px; max-width: 64ch; }
+.install li::marker { font-family: var(--mono); color: var(--muted); }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; color: var(--muted); font-size: 0.95rem; max-width: 64ch; }
+kbd { font: 500 0.85em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; }
+
+footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); padding-top: 20px; }
+
+@media (max-width: 760px) {
+  main { padding-block: 32px 56px; gap: 56px; }
+  .hero, .features { grid-template-columns: 1fr; }
+  .bar { gap: 2px; }
+  .bar span { font-size: 0.75rem; }
+}
+@media (prefers-reduced-motion: reduce) { .download { transition: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="bolt" viewBox="0 0 24 24"><path d="M13.5 2 4 13.5h6.5L9 22l10-12h-6.6L13.5 2Z"/></symbol>
+</svg>
+<main>
+  <section class="hero">
+    <div class="pitch">
+      <span class="eyebrow"><svg><use href="#bolt"/></svg> Menu bar app for macOS</span>
+      <h1>See which apps are draining your Mac.</h1>
+      <p class="lede">EnergyPercentages sits in your menu bar and gives every running app an energy score from 0 to 10, so you can spot the one that's heating up your laptop.</p>
+      <div class="cta">
+        <a class="download" href="https://github.com/quinmartin/EnergyPercentages/releases/latest/download/EnergyPercentages.zip">
+          <svg viewBox="0 0 24 24"><path d="M12 3a1 1 0 0 1 1 1v9.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1ZM5 19h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2Z"/></svg>
+          Download for Mac
+        </a>
+        <span class="meta">v1.0 · 110 KB · macOS 26.5+</span>
+      </div>
+    </div>
+    <div class="menu" aria-label="Example of the EnergyPercentages menu">
+      <div class="menubar"><span><svg><use href="#bolt"/></svg></span><span>Wi‑Fi</span><span>9:41</span></div>
+      <h3>Energy Usage</h3>
+      <ul>
+        <li><span>Google Chrome</span><span class="score s-high"><svg><use href="#bolt"/></svg>8</span></li>
+        <li><span>Xcode</span><span class="score s-mid"><svg><use href="#bolt"/></svg>5</span></li>
+        <li><span>Figma</span><span class="score s-mid"><svg><use href="#bolt"/></svg>4</span></li>
+        <li><span>Spotify</span><span class="score s-low"><svg><use href="#bolt"/></svg>2</span></li>
+        <li><span>Messages</span><span class="score s-low"><svg><use href="#bolt"/></svg>1</span></li>
+        <li><span>Notes</span><span class="score s-low"><svg><use href="#bolt"/></svg>0</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="scale">
+    <h2>How the score works</h2>
+    <p>Each app's score comes from the CPU time it used, measured against everything your Mac's cores could have done in that time. Small amounts of work still show up, and only the really heavy apps reach the top of the scale.</p>
+    <div class="bar" aria-hidden="true">
+      <span style="background:var(--low)">0</span><span style="background:var(--low)">1</span><span style="background:var(--low)">2</span><span style="background:var(--low)">3</span>
+      <span style="background:var(--mid)">4</span><span style="background:var(--mid)">5</span><span style="background:var(--mid)">6</span>
+      <span style="background:var(--high)">7</span><span style="background:var(--high)">8</span><span style="background:var(--high)">9</span><span style="background:var(--high)">10</span>
+    </div>
+    <div class="legend">
+      <span><b>0–3</b> light use</span>
+      <span><b>4–6</b> working hard</span>
+      <span><b>7–10</b> draining your battery</span>
+    </div>
+  </section>
+
+  <section class="features">
+    <div>
+      <h3>Ranked in the menu bar</h3>
+      <p>Click the bolt to see your apps listed from most to least energy.</p>
+    </div>
+    <div>
+      <h3>Scores on your Dock</h3>
+      <p>A small badge above each Dock icon shows its score at a glance.</p>
+    </div>
+    <div>
+      <h3>Starts with your Mac</h3>
+      <p>Turn on Open at Login and it's always there when you need it.</p>
+    </div>
+  </section>
+
+  <section class="install">
+    <h2>Installing</h2>
+    <ol>
+      <li>Download the zip and double-click it to unzip.</li>
+      <li>Drag <b>EnergyPercentages</b> into your Applications folder.</li>
+      <li>Open it. If macOS says it can't check the app, go to <b>System Settings › Privacy &amp; Security</b>, scroll down, and click <b>Open Anyway</b>.</li>
+      <li>To see scores on your Dock, allow EnergyPercentages under <b>System Settings › Privacy &amp; Security › Accessibility</b>.</li>
+    </ol>
+    <p class="note">The warning in step 3 appears because this app is shared directly instead of through the Mac App Store. You only need to approve it once.</p>
+  </section>
+
+  <footer>Made by Quin Martin · Free</footer>
+</main>
+</body>
+</html>
